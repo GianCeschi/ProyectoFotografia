@@ -1,30 +1,35 @@
 package org.example.demofotografia.services;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.json.*;
 
+import org.springframework.web.util.UriComponentsBuilder;
+
 @Service
 public class VisionApiService {
 
-    private static final String API_KEY = "AIzaSyBN1S3Q3YHALrcUPJyuB4LKnNO_huiawbs"; //NO EXPONERLA ACA
-    private static final String VISION_URL = "https://vision.googleapis.com/v1/images:annotate?key=" + API_KEY;
+    @Value("${vision.api.key}")
+    private String apiKey;
+
+    private static final String VISION_API_URL = "https://vision.googleapis.com/v1/images:annotate";
 
     public String procesarImagenes(String requestJson) {
         RestTemplate restTemplate = new RestTemplate();
-        //RestTemplate → Es una clase de Spring Boot que facilita el envío de peticiones HTTP y
-        // el manejo de respuestas.
+
+        // Construcción correcta de la URL con el parámetro API key
+        String url = UriComponentsBuilder.fromHttpUrl(VISION_API_URL)
+                .queryParam("key", apiKey)
+                .toUriString();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        //HttpHeaders → Se usa para definir los encabezados de la petición.
-        //headers.setContentType(MediaType.APPLICATION_JSON); → Especifica que el contenido de la solicitud
-        // será JSON.
 
         HttpEntity<String> requestEntity = new HttpEntity<>(requestJson, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(VISION_URL, HttpMethod.POST, requestEntity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
 
         if (response.getStatusCode() == HttpStatus.OK) {
             return response.getBody();  // Devuelve la respuesta JSON
@@ -32,5 +37,5 @@ public class VisionApiService {
             return "Error en la API: " + response.getStatusCode() + " - " + response.getBody();
         }
     }
-
 }
+

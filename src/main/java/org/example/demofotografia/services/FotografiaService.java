@@ -1,16 +1,11 @@
 package org.example.demofotografia.services;
 
-import org.example.demofotografia.repositories.FotografiaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-
-import org.example.demofotografia.repositories.FotografiaRepository;
 import org.example.demofotografia.entities.Fotografia;
+import org.example.demofotografia.repositories.FotografiaRepository;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.json.JSONObject;
 
 @Service
 public class FotografiaService {
@@ -18,43 +13,45 @@ public class FotografiaService {
     private FotografiaRepository fotografiaRepository;
 
     public void vincularImagenes(String requestJson, String responseJson) {
-        // Extraemos la URL de la imagen del request
-        String imageUrl = extraerUrlImagen(requestJson); //PASAR INDICE Y HACER FOR
+        JSONArray requestArray = new JSONObject(requestJson).getJSONArray("requests");
+        JSONArray responseArray = new JSONObject(responseJson).getJSONArray("responses");
 
-        // Extraemos el número de placa del response
-        String numeroPlaca = extraerNumeroPlaca(responseJson);
+        // Iteramos hasta que no haya más imágenes o respuestas disponibles
+        int cantidad = Math.min(requestArray.length(), responseArray.length());
 
-        // Guardamos en la base de datos si ambos valores son válidos
-        if (imageUrl != null && numeroPlaca != null) {
-            Fotografia fotografia = new Fotografia(imageUrl, numeroPlaca);
-            fotografiaRepository.save(fotografia); // Guardar en la BD
+        for (int i = 0; i < cantidad; i++) {
+            String imageUrl = extraerUrlImagen(requestArray, i);
+            String numeroPlaca = extraerNumeroPlaca(responseArray, i);
+            //PODRIAMOS TENER UNA LISTA DE STRING (SEPARADOS POR /N)
+
+            if (imageUrl != null && numeroPlaca != null) {
+                Fotografia fotografia = new Fotografia(imageUrl, numeroPlaca);
+                fotografiaRepository.save(fotografia);
+            }
         }
     }
 
-    private String extraerUrlImagen(String requestJson) {
+    private String extraerUrlImagen(JSONArray requestArray, int index) {
         try {
-            JSONObject jsonObject = new JSONObject(requestJson);
-            return jsonObject.getJSONArray("requests")
-                    .getJSONObject(0)
+            return requestArray.getJSONObject(index)
                     .getJSONObject("image")
                     .getJSONObject("source")
                     .getString("gcsImageUri");
         } catch (Exception e) {
-            return null;
+            return null;  // Si hay un error, devuelve null
         }
     }
 
-    private String extraerNumeroPlaca(String responseJson) {
+    private String extraerNumeroPlaca(JSONArray responseArray, int index) {
         try {
-            JSONObject jsonObject = new JSONObject(responseJson);
-            return jsonObject.getJSONArray("responses")
-                    .getJSONObject(0)
+            return responseArray.getJSONObject(index)
                     .getJSONArray("textAnnotations")
                     .getJSONObject(0)
                     .getString("description");
         } catch (Exception e) {
-            return null;
+            return null;  // Si hay un error, devuelve null
         }
     }
 }
+
 

@@ -7,6 +7,11 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Service
 public class FotografiaService {
     @Autowired
@@ -21,10 +26,9 @@ public class FotografiaService {
 
         for (int i = 0; i < cantidad; i++) {
             String imageUrl = extraerUrlImagen(requestArray, i);
-            String numeroPlaca = extraerNumeroPlaca(responseArray, i);
-            //PODRIAMOS TENER UNA LISTA DE STRING (SEPARADOS POR /N)
+            List<String> numeroPlaca = extraerNumerosPlaca(responseArray, i);
 
-            if (imageUrl != null && numeroPlaca != null) {
+            if (imageUrl != null && !numeroPlaca.isEmpty()) {
                 Fotografia fotografia = new Fotografia(imageUrl, numeroPlaca);
                 fotografiaRepository.save(fotografia);
             }
@@ -42,16 +46,36 @@ public class FotografiaService {
         }
     }
 
-    private String extraerNumeroPlaca(JSONArray responseArray, int index) {
+    private List<String> extraerNumerosPlaca(JSONArray responseArray, int index) {
+        List<String> numerosPlaca = new ArrayList<>();
         try {
-            return responseArray.getJSONObject(index)
-                    .getJSONArray("textAnnotations")
-                    .getJSONObject(0)
-                    .getString("description");
+            JSONObject responseObject = responseArray.getJSONObject(index);
+            // Verificar si 'textAnnotations' existe en la respuesta
+            if (responseObject.has("textAnnotations")) { //: Se verifica si la clave textAnnotations existe dentro de responseObject. Si existe, devuelve true; Tuve que agregar porque me daba error sino
+                System.out.println("ENTRO ACA, SI NO HAY MAS IMAGENES NO TIENE QUE ENTRAR MAS");
+
+                String textoPlaca = responseObject.getJSONArray("textAnnotations")
+                        .getJSONObject(0)
+                        .getString("description");
+
+                String[] lineas = textoPlaca.split("\n");
+
+                Pattern pattern = Pattern.compile("\\d+");
+
+                for (String linea : lineas) {
+                    Matcher matcher = pattern.matcher(linea);
+                    while (matcher.find()) {  // Busca números dentro de la línea
+                        numerosPlaca.add(matcher.group());
+                    }
+                }
+            }
         } catch (Exception e) {
-            return null;  // Si hay un error, devuelve null
+            e.printStackTrace();
         }
+        return numerosPlaca;
     }
+
+
 }
 
 

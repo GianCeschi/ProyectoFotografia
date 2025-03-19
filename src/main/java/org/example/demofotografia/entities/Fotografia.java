@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Data
@@ -17,17 +18,19 @@ public class Fotografia {
     @Column
     private String url;
 
-    @Column
-    private String nroPlaca;
+    @ElementCollection //Indica que nrosPlaca es una colección embebida en otra tabla.
+    @CollectionTable(name = "fotografia_nros_placa", joinColumns = @JoinColumn(name = "fotografia_id"))
+    @Column(name = "nro_placa") //@CollectionTable: Crea una tabla llamada fotografia_nros_placa con la clave foránea
+    private List<String> nrosPlaca;
 
     // Constructores
     // Constructor sin parámetros -- CHEQUEAR PORQUE NO FUNCIONA NoArgsContructor
     public Fotografia() {
     }
 
-    public Fotografia(String urlImagen, String numeroPlaca) {
+    public Fotografia(String urlImagen, List<String> numerosPlaca) {
         this.url = urlImagen;
-        this.nroPlaca = numeroPlaca;
+        this.nrosPlaca = numerosPlaca;
     }
 
     @Override
@@ -35,7 +38,7 @@ public class Fotografia {
         return "Fotografia{" +
                 "id=" + id +
                 ", url='" + url + '\'' +
-                ", nroPlaca='" + nroPlaca + '\'' +
+                ", nrosPlaca='" + nrosPlaca + '\'' +
                 '}';
     }
 }

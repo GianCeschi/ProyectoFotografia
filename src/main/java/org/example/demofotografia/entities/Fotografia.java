@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Data
+
 public class Fotografia {
 
     @Id
@@ -28,9 +30,22 @@ public class Fotografia {
     public Fotografia() {
     }
 
+    public Fotografia(String url) {
+        this.url = url;
+        this.nrosPlaca = new ArrayList<>();
+    }
+
     public Fotografia(String urlImagen, List<String> numerosPlaca) {
         this.url = urlImagen;
         this.nrosPlaca = numerosPlaca;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     @Override
